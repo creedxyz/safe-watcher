@@ -11,7 +11,7 @@ import type {
   SafeTx,
   Signer,
 } from "./safe/index.js";
-import { SafeApiWrapper } from "./safe/index.js";
+import { MULTISEND_CALL_ONLY, SafeApiWrapper } from "./safe/index.js";
 import type { INotificationSender } from "./types.js";
 
 interface SafeWatcherOptions {
@@ -119,8 +119,12 @@ class SafeWatcher {
     // ]);
     const detailed = await this.#fetchDetailed(tx.safeTxHash);
 
+    const isMalicious =
+      MULTISEND_CALL_ONLY.has(detailed.to.toLowerCase() as Address) &&
+      detailed.operation !== 0;
+
     await this.#notificationSender?.notify({
-      type: "created",
+      type: isMalicious ? "created" : "malicious",
       chainPrefix: this.#prefix,
       safe: this.#safe,
       tx: detailed,
