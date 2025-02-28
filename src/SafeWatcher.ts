@@ -120,7 +120,7 @@ class SafeWatcher {
     const detailed = await this.#fetchDetailed(tx.safeTxHash);
 
     const isMalicious =
-      MULTISEND_CALL_ONLY.has(detailed.to.toLowerCase() as Address) &&
+      !MULTISEND_CALL_ONLY.has(detailed.to.toLowerCase() as Address) &&
       detailed.operation !== 0;
 
     await this.#notificationSender?.notify({
