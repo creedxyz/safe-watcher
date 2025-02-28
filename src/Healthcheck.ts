@@ -1,6 +1,4 @@
-import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { resolve } from "node:path";
 
 import { formatDuration, intervalToDuration } from "date-fns";
 import { customAlphabet } from "nanoid";
@@ -15,11 +13,7 @@ class Healthcheck {
   #start = Math.round(new Date().valueOf() / 1000);
 
   public async run(): Promise<void> {
-    const { version } = await readFile(
-      resolve(import.meta.dirname, "../package.json"),
-      "utf-8",
-    ).then(JSON.parse);
-    this.#version = version;
+    this.#version = process.env.PACKAGE_VERSION || "dev";
     const server = createServer(async (req, res) => {
       // Routing
       if (req.url === "/") {
