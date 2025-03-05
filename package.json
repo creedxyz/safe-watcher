@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "node esbuild.mjs",
-    "start": "sh -c 'tsx --env-file .env src/index.ts \"$@\" | pino-pretty --colorize' --",
+    "start": "touch .env && sh -c 'tsx --env-file .env src/index.ts \"$@\" | pino-pretty --colorize' --",
     "prepare": "husky",
     "prettier": "prettier --write .",
     "prettier:ci": "npx prettier --check .",
