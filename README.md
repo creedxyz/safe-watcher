@@ -6,7 +6,7 @@ This repository contains a bot that monitors one or more Safe addresses for crit
 - **Signing Transactions:** Monitors who signs the transactions and how many signatures have been collected.
 - **Executing Transactions:** Sends alerts when a transaction is executed.
 
-Additionally, the bot watches for any suspicious `delegateCall`. If a `delegateCall` is directed to an address other than the trusted `MultiSend` contract, the bot immediately flags it, helping to prevent attacks similar to the Bybit hack.  
+Additionally, the bot watches for any suspicious `delegateCall`. If a `delegateCall` is directed to an address other than the trusted `MultiSend` contract, the bot immediately flags it, helping to prevent attacks similar to the Bybit hack.
 
 Real-time alerts are sent to a configured Telegram channel for immediate notification.
 
@@ -50,6 +50,49 @@ docker run -v $(pwd)/config.yaml:/app/config.yaml ghcr.io/gearbox-protocol/safe-
    - Provide a username for your bot (it must end in "bot", e.g., `MySafeNotifierBot`).
 4. Once the bot is created, BotFather will provide you with an HTTP API token (e.g., `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`).
 5. Copy this token and use it as the value for `telegramBotToken` in your `config.yaml`.
+
+### Getting a Telegram Channel ID
+
+1. Create a new channel or group in Telegram.
+2. Invite your bot to the channel.
+3. Send a message to the channel.
+4. Use getUpdates (Testing Locally or Anywhere You Can Send HTTP Requests)
+
+- Make a call to the [getUpdates](https://core.telegram.org/bots/api#getupdates) endpoint of the Bot API using your bot token. For example: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates
+
+The response is a JSON that contains “messages,” “channel_posts,” “callback_query,” or similar objects, depending on how your bot receives interactions.
+
+5. Parse the JSON
+
+- Look for the `"chat"` object inside each message (e.g., `"message"` or `"edited_message"`).
+- The `"chat": { "id": ... }` field is the chat ID. For example, a response might look like:
+
+```json
+{
+  "ok": true,
+  "result": [
+    {
+      "update_id": 123456789,
+      "message": {
+        "message_id": 12,
+        "from": {
+          ...
+        },
+        "chat": {
+          "id": 987654321,
+          "first_name": "John",
+          "type": "private"
+        },
+        "date": 1643212345,
+        "text": "Hello"
+      }
+    }
+  ]
+}
+```
+
+In this snippet, 987654321 is the telegramChannelId.
+.
 
 ### Running via Docker
 

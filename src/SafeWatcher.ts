@@ -124,7 +124,7 @@ class SafeWatcher {
       detailed.operation !== 0;
 
     await this.#notificationSender?.notify({
-      type: isMalicious ? "created" : "malicious",
+      type: isMalicious ? "malicious" : "created",
       chainPrefix: this.#prefix,
       safe: this.#safe,
       tx: detailed,

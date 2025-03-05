@@ -9,7 +9,7 @@ const ACTIONS: Record<EventType, string> = {
   created: "created",
   updated: "updated",
   executed: "executed",
-  malicious: "created malicious",
+  malicious: "ALERT! ACTION REQUIRED: MALICIOUS TRANSACTION DETECTED!",
 };
 
 const NETWORKS: Record<string, string> = {
