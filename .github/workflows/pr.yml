@@ -18,8 +18,12 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: setup corepack for yarn 4
-        run: corepack enable
+      - name: Use Latest Corepack
+        run: |
+          echo "Before: corepack version => $(corepack --version || echo 'not installed')"
+          npm install -g corepack@latest
+          echo "After : corepack version => $(corepack --version)"
+          corepack enable
 
       - uses: actions/setup-node@v4
         with:
@@ -28,7 +32,7 @@ jobs:
 
       - name: Perform checks
         run: |
-          yarn install --frozen-lockfile
+          yarn install --immutable
           yarn typecheck:ci
           yarn lint:ci
           yarn prettier:ci
