@@ -28,7 +28,7 @@ const NETWORKS: Record<string, string> = {
   avalanche: "Avalanche",
   oeth: "Optimism",
   zkevm: "zkEVM",
-  bsc: "BSC",
+  bsc: "Binance",
   aurora: "Aurora",
   blast: "Blast",
   celo: "Celo",
@@ -105,7 +105,7 @@ export class Telegram implements INotifier {
       const components = [
         "🚀 *Safe Watcher Started*",
         `Watching ${safeAddresses.length} Safe address${safeAddresses.length > 1 ? "es" : ""}:`,
-        md.join(watchedAddresses, "\n"),
+        md.join(watchedAddresses, "\n\n"),
       ];
 
       const msg = md.join(components, "\n\n");
