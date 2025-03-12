@@ -32,3 +32,4 @@ config.local.yaml
 config.yaml
 # Optimistic output
 /output
+/tmp

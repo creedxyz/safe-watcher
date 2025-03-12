@@ -91,11 +91,32 @@ function normalizeDetailed(tx: SafeMultisigTransaction): SafeTx<Address> {
 }
 
 const APIS: Record<string, string> = {
-  arb1: "https://safe-transaction-arbitrum.safe.global",
-  eth: "https://safe-transaction-mainnet.safe.global",
+  // Testnets
   gor: "https://safe-transaction-goerli.safe.global",
-  oeth: "https://safe-transaction-optimism.safe.global",
+  "gnosis-chiado": "https://safe-transaction-chiado.safe.global",
   sep: "https://safe-transaction-sepolia.safe.global",
+  "base-sepolia": "https://safe-transaction-base-sepolia.safe.global",
+  // Mainnets
+  eth: "https://safe-transaction-mainnet.safe.global",
+  matic: "https://safe-transaction-polygon.safe.global",
+  polygon: "https://safe-transaction-polygon.safe.global",
+  gno: "https://safe-transaction-gnosis-chain.safe.global",
+  base: "https://safe-transaction-base.safe.global",
+  arb: "https://safe-transaction-arbitrum.safe.global",
+  avalanche: "https://safe-transaction-avalanche.safe.global",
+  optimism: "https://safe-transaction-optimism.safe.global",
+  oeth: "https://safe-transaction-optimism.safe.global",
+  zkevm: "https://safe-transaction-zkevm.safe.global",
+  bsc: "https://safe-transaction-bsc.safe.global",
+  aurora: "https://safe-transaction-aurora.safe.global",
+  blast: "https://safe-transaction-blast.safe.global",
+  celo: "https://safe-transaction-celo.safe.global",
+  linea: "https://safe-transaction-linea.safe.global",
+  mantle: "https://safe-transaction-mantle.safe.global",
+  scroll: "https://safe-transaction-scroll.safe.global",
+  worldchain: "https://safe-transaction-worldchain.safe.global",
+  xlayer: "https://safe-transaction-xlayer.safe.global",
+  zksync: "https://safe-transaction-zksync.safe.global",
 };
 
 export class ClassicAPI extends BaseApi implements ISafeAPI {

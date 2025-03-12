@@ -120,11 +120,31 @@ function parseTxId(id: TxID): ParsedTxId {
 }
 
 const CHAIN_IDS: Record<string, number> = {
-  arb1: 42161,
-  eth: 1,
+  // Testnets
   gor: 5,
-  oeth: 10,
-  sep: 11155111,
+  gchi: 10200, // gnosis chiado
+  sep: 11155111, // sepolia
+  bsep: 84532, // base sepolia
+  // Mainnets
+  eth: 1, // ethereum
+  matic: 137, // polygon
+  poly: 137, // polygon alias
+  gno: 100, // gnosis
+  base: 8453,
+  arb: 42161, // arbitrum
+  avax: 43114, // avalanche
+  oeth: 10, // optimism
+  pzkv: 1101, // polygon zkevm
+  bsc: 56,
+  aur: 1313161554, // aurora
+  blast: 81457,
+  celo: 42220,
+  line: 59144, // linea
+  mant: 5000, // mantle
+  scrl: 534352, // scroll
+  wrld: 196, // worldchain
+  xlay: 196, // xlayer
+  zks: 324, // zksync
 };
 
 function normalizeListed(tx: ListedTx): ListedSafeTx {
