@@ -1,7 +1,12 @@
 import type { Address, Hash } from "viem";
 
+export interface FetchAllResult {
+  txs: ListedSafeTx[];
+  countUniqueNonce?: number;
+}
+
 export interface ISafeAPI {
-  fetchAll: () => Promise<ListedSafeTx[]>;
+  fetchAll: () => Promise<ListedSafeTx[] | FetchAllResult>;
   fetchLatest: () => Promise<ListedSafeTx[]>;
   fetchDetailed: (safeTxHash: Hash) => Promise<SafeTx<Address>>;
 }

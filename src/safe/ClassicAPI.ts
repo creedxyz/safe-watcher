@@ -104,7 +104,6 @@ const APIS: Record<string, string> = {
   base: "https://safe-transaction-base.safe.global",
   arb: "https://safe-transaction-arbitrum.safe.global",
   avalanche: "https://safe-transaction-avalanche.safe.global",
-  optimism: "https://safe-transaction-optimism.safe.global",
   oeth: "https://safe-transaction-optimism.safe.global",
   zkevm: "https://safe-transaction-zkevm.safe.global",
   bsc: "https://safe-transaction-bsc.safe.global",
@@ -122,18 +121,35 @@ const APIS: Record<string, string> = {
 export class ClassicAPI extends BaseApi implements ISafeAPI {
   readonly #txs = new Map<Hash, SafeMultisigTransaction>();
 
-  public async fetchAll(): Promise<ListedSafeTx[]> {
+  public async fetchAll(): Promise<{
+    txs: ListedSafeTx[];
+    countUniqueNonce?: number;
+  }> {
     let url: string | null | undefined;
     const results: SafeMultisigTransaction[] = [];
-    do {
+    let countUniqueNonce: number | undefined;
+
+    // Get the first batch and extract countUniqueNonce
+    const initialData = await this.#fetchMany();
+    countUniqueNonce = initialData.countUniqueNonce;
+    results.push(...(initialData.results ?? []));
+    url = initialData.next;
+
+    // Get any remaining pages if necessary
+    while (url) {
       const data = await this.#fetchMany(url);
       results.push(...(data.results ?? []));
       url = data.next;
-    } while (url);
+    }
+
     for (const result of results) {
       this.#txs.set(result.safeTxHash, result);
     }
-    return results.map(normalizeListed);
+
+    return {
+      txs: results.map(normalizeListed),
+      countUniqueNonce,
+    };
   }
 
   public async fetchLatest(): Promise<ListedSafeTx[]> {

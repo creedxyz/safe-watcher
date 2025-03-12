@@ -42,11 +42,25 @@ class SafeWatcher {
     this.#api = new SafeApiWrapper(opts.safe, opts.api);
   }
 
-  public async start(pollInterval: number): Promise<void> {
-    const txs = await this.#api.fetchAll();
+  public async start(
+    pollInterval: number,
+  ): Promise<{ txs: ListedSafeTx[]; countUniqueNonce?: number }> {
+    const result = await this.#api.fetchAll();
+    let txs: ListedSafeTx[];
+    let countUniqueNonce: number | undefined;
+
+    // Handle the case where fetchAll might return an object with countUniqueNonce
+    if (Array.isArray(result)) {
+      txs = result;
+    } else {
+      txs = result.txs;
+      countUniqueNonce = result.countUniqueNonce;
+    }
+
     for (const tx of txs) {
       this.#txs.set(tx.safeTxHash, tx);
     }
+
     if (pollInterval > 0) {
       this.#interval = setInterval(() => {
         this.poll().catch(e => {
@@ -54,7 +68,9 @@ class SafeWatcher {
         });
       }, pollInterval);
     }
-    this.#logger.info({ txs: txs.length }, "started watcher");
+
+    this.#logger.info({ txs: txs.length, countUniqueNonce }, "started watcher");
+    return { txs, countUniqueNonce };
   }
 
   public stop(): void {

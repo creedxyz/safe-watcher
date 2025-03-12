@@ -13,10 +13,31 @@ const ACTIONS: Record<EventType, string> = {
 };
 
 const NETWORKS: Record<string, string> = {
-  arb1: "Arbitrum",
+  // Testnets
+  gor: "Goerli Testnet",
+  "gnosis-chiado": "Gnosis Chiado Testnet",
+  sep: "Sepolia Testnet",
+  "base-sepolia": "Base Sepolia Testnet",
+  // Mainnets
   eth: "Eth Mainnet",
-  gor: "Eth Goerli",
+  matic: "Polygon",
+  polygon: "Polygon",
+  gno: "Gnosis Chain",
+  base: "Base",
+  arb: "Arbitrum",
+  avalanche: "Avalanche",
   oeth: "Optimism",
+  zkevm: "zkEVM",
+  bsc: "BSC",
+  aurora: "Aurora",
+  blast: "Blast",
+  celo: "Celo",
+  linea: "Linea",
+  mantle: "Mantle",
+  scroll: "Scroll",
+  worldchain: "Worldchain",
+  xlayer: "XLayer",
+  zksync: "zkSync",
 };
 
 export interface TelegramOptions {
@@ -51,7 +72,10 @@ export class Telegram implements INotifier {
     await this.#sendToTelegram(msg.toString());
   }
 
-  public async sendStartupMessage(safeAddresses: string[]): Promise<void> {
+  public async sendStartupMessage(
+    safeAddresses: string[],
+    nonceStats?: Map<string, number>,
+  ): Promise<void> {
     if (!this.#botToken || !this.#channelId) {
       logger.warn(
         "Cannot send startup message - Telegram is not properly configured",
@@ -63,19 +87,29 @@ export class Telegram implements INotifier {
       const watchedAddresses = safeAddresses.map(addr => {
         const [prefix, address] = addr.split(":");
         const network = NETWORKS[prefix] || prefix;
-        return md`${network}: ${md.inlineCode(address)}`;
+
+        // Add countUniqueNonce if available
+        let addressInfo;
+        if (nonceStats && nonceStats.has(addr)) {
+          const uniqueNonceCount = nonceStats.get(addr);
+          // Use string concatenation for the parentheses part to avoid any potential escaping issues
+          addressInfo =
+            md`${network}: ${address} ` + `(Nonce: ${uniqueNonceCount})`;
+        } else {
+          addressInfo = md`${network}: ${address}`;
+        }
+
+        return addressInfo;
       });
 
       const components = [
-        md`
-🚀 _Safe Watcher Started_
-        `,
-        md`Watching ${safeAddresses.length} Safe address${safeAddresses.length > 1 ? "es" : ""}:`,
+        "🚀 *Safe Watcher Started*",
+        `Watching ${safeAddresses.length} Safe address${safeAddresses.length > 1 ? "es" : ""}:`,
         md.join(watchedAddresses, "\n"),
       ];
 
       const msg = md.join(components, "\n\n");
-      logger.info("Sending startup message to Telegram");
+      logger.info("Sending detailed startup message to Telegram");
       await this.#sendToTelegram(msg.toString());
     } catch (error) {
       logger.error({ error }, "Failed to send startup message to Telegram");
@@ -117,25 +151,21 @@ export class Telegram implements INotifier {
       return;
     }
 
-    // The markdown library may not be properly escaping special characters for Telegram's MarkdownV2
-    // Try using HTML mode instead which is more forgiving
-    const useHtmlMode = true;
-
+    // Always use HTML mode - it's more forgiving than MarkdownV2
     logger.info("Attempting to send message to Telegram");
     const url = `https://api.telegram.org/bot${this.#botToken}/sendMessage`;
 
-    let messageTxt = text;
-    let parseMode = "MarkdownV2";
+    // Convert to HTML and remove any escaping backslashes
+    let messageTxt = text
+      // First remove any accidental Markdown escape characters
+      .replace(/\\([()[\]{}#*_~>+=|!.,-])/g, "$1")
+      // Then convert to HTML
+      .replace(/\*([^*]+)\*/g, "<b>$1</b>") // Bold
+      .replace(/_([^_]+)_/g, "<i>$1</i>") // Italic
+      .replace(/`([^`]+)`/g, "<code>$1</code>") // Code
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // Links
 
-    if (useHtmlMode) {
-      // Convert basic markdown to HTML
-      messageTxt = text
-        .replace(/\*([^*]+)\*/g, "<b>$1</b>") // Bold
-        .replace(/_([^_]+)_/g, "<i>$1</i>") // Italic
-        .replace(/`([^`]+)`/g, "<code>$1</code>") // Code
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // Links
-      parseMode = "HTML";
-    }
+    const parseMode = "HTML";
 
     const requestBody = {
       chat_id: this.#channelId,

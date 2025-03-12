@@ -174,20 +174,39 @@ function normalizeDetailed(tx: Transaction): SafeTx<Address> {
 }
 
 export class AltAPI extends BaseApi implements ISafeAPI {
-  public async fetchAll(): Promise<ListedSafeTx[]> {
+  public async fetchAll(): Promise<{
+    txs: ListedSafeTx[];
+    countUniqueNonce?: number;
+  }> {
     let url: string | null | undefined;
     const results: ListedTx[] = [];
+
+    // The AltAPI doesn't provide countUniqueNonce directly
+    // We'll calculate it based on the unique nonces in the transactions
+    const uniqueNonces = new Set<number>();
+
     do {
       try {
         const data = await this.#fetchList(url);
-        results.push(...(data.results.map(tx => tx.transaction) ?? []));
+        const transactions = data.results.map(tx => tx.transaction) ?? [];
+
+        // Track unique nonces
+        for (const tx of transactions) {
+          uniqueNonces.add(tx.executionInfo.nonce);
+        }
+
+        results.push(...transactions);
         url = data.next;
       } catch (e) {
         this.logger.error(e);
         break;
       }
     } while (url);
-    return results.map(normalizeListed);
+
+    return {
+      txs: results.map(normalizeListed),
+      countUniqueNonce: uniqueNonces.size,
+    };
   }
 
   public async fetchLatest(): Promise<ListedSafeTx[]> {
