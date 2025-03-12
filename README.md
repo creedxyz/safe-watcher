@@ -36,6 +36,7 @@ docker run -v $(pwd)/config.yaml:/app/config.yaml ghcr.io/gearbox-protocol/safe-
 
    - **telegramBotToken:** Your Telegram Bot API token (instructions below).
    - **telegramChannelId:** The ID of the channel or group where alerts will be posted.
+   - **slackWebhookUrl:** The URL of the Slack webhook.
    - **safeAddresses:** One or more Safe addresses to monitor, prefixed by the network identifier (e.g., `eth:` for the Ethereum mainnet).
    - **signers:** A mapping of addresses to descriptive names (useful for labeling owners in alerts).
 

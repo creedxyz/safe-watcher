@@ -37,8 +37,49 @@ export class Telegram implements INotifier {
   }
 
   public async send(event: Event): Promise<void> {
+    logger.info(
+      {
+        eventType: event.type,
+        chain: event.chainPrefix,
+        tx: event.tx.safeTxHash.substring(0, 10) + "...",
+        pending: event.pending.length,
+      },
+      "Processing notification event",
+    );
+
     const msg = this.#getMessage(event);
     await this.#sendToTelegram(msg.toString());
+  }
+
+  public async sendStartupMessage(safeAddresses: string[]): Promise<void> {
+    if (!this.#botToken || !this.#channelId) {
+      logger.warn(
+        "Cannot send startup message - Telegram is not properly configured",
+      );
+      return;
+    }
+
+    try {
+      const watchedAddresses = safeAddresses.map(addr => {
+        const [prefix, address] = addr.split(":");
+        const network = NETWORKS[prefix] || prefix;
+        return md`${network}: ${md.inlineCode(address)}`;
+      });
+
+      const components = [
+        md`
+🚀 _Safe Watcher Started_
+        `,
+        md`Watching ${safeAddresses.length} Safe address${safeAddresses.length > 1 ? "es" : ""}:`,
+        md.join(watchedAddresses, "\n"),
+      ];
+
+      const msg = md.join(components, "\n\n");
+      logger.info("Sending startup message to Telegram");
+      await this.#sendToTelegram(msg.toString());
+    } catch (error) {
+      logger.error({ error }, "Failed to send startup message to Telegram");
+    }
   }
 
   #getMessage(event: Event): Markdown {
@@ -48,10 +89,6 @@ export class Telegram implements INotifier {
       "🔗 transaction",
       `${this.#safeURL}/${chainPrefix}:${safe}/transactions/queue`,
     );
-    // const report = md.link(
-    //   "📄 tx report",
-    //   this.anvilManagerAPI.reportURL(this.#chain.network, [tx.safeTxHash]),
-    // );
     const proposer = md`Proposed by: ${printSigner(tx.proposer)}`;
     let confirmations = md.join(tx.confirmations.map(printSigner), ", ");
     confirmations = md`Signed by: ${confirmations}`;
@@ -59,10 +96,7 @@ export class Telegram implements INotifier {
     const msg = md`${ACTIONS[type]} ${NETWORKS[chainPrefix]} multisig [${tx.confirmations.length}/${tx.confirmationsRequired}] with safeTxHash ${md.inlineCode(tx.safeTxHash)} and nonce ${md.inlineCode(tx.nonce)}`;
 
     const components = [msg, proposer, confirmations];
-    const links = [link /* , report */];
-    // if (pendingReport) {
-    //   links.push(md.link("📄 pending report", pendingReport));
-    // }
+    const links = [link];
     components.push(md.join(links, " ‖ "));
 
     return md.join(components, "\n\n");
@@ -70,30 +104,81 @@ export class Telegram implements INotifier {
 
   async #sendToTelegram(text: string): Promise<void> {
     if (!this.#botToken || !this.#channelId) {
-      logger.warn("telegram messages not configured");
+      logger.warn(
+        "telegram messages not configured - botToken or channelId missing",
+      );
+      logger.debug(
+        {
+          hasBotToken: !!this.#botToken,
+          hasChannelId: !!this.#channelId,
+        },
+        "telegram configuration status",
+      );
       return;
     }
+
+    // The markdown library may not be properly escaping special characters for Telegram's MarkdownV2
+    // Try using HTML mode instead which is more forgiving
+    const useHtmlMode = true;
+
+    logger.info("Attempting to send message to Telegram");
     const url = `https://api.telegram.org/bot${this.#botToken}/sendMessage`;
 
+    let messageTxt = text;
+    let parseMode = "MarkdownV2";
+
+    if (useHtmlMode) {
+      // Convert basic markdown to HTML
+      messageTxt = text
+        .replace(/\*([^*]+)\*/g, "<b>$1</b>") // Bold
+        .replace(/_([^_]+)_/g, "<i>$1</i>") // Italic
+        .replace(/`([^`]+)`/g, "<code>$1</code>") // Code
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // Links
+      parseMode = "HTML";
+    }
+
+    const requestBody = {
+      chat_id: this.#channelId,
+      parse_mode: parseMode,
+      text: messageTxt,
+    };
+
     try {
+      logger.debug(
+        { url, chatId: this.#channelId },
+        "Sending telegram message",
+      );
+
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: this.#channelId,
-          parse_mode: "MarkdownV2",
-          text,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        logger.debug("telegram sent successfully");
+        const responseData = await response.json();
+        logger.info({ responseData }, "telegram message sent successfully");
       } else {
         const err = await response.text();
+        logger.error(
+          {
+            status: response.status,
+            statusText: response.statusText,
+            error: err,
+            text: text.substring(0, 100) + (text.length > 100 ? "..." : ""), // Log truncated message for debugging
+          },
+          "telegram API error response",
+        );
         throw new Error(`${response.statusText}: ${err}`);
       }
     } catch (err) {
-      logger.error({ err, text }, "cannot send to telegram");
+      logger.error(
+        {
+          err,
+          text: text.substring(0, 100) + (text.length > 100 ? "..." : ""),
+        },
+        "cannot send to telegram",
+      );
     }
   }
 }

@@ -10,7 +10,8 @@ async function run() {
   const config = await loadConfig();
 
   const sender = new NotificationSender();
-  await sender.addNotifier(new Telegram(config));
+  const telegramNotifier = new Telegram(config);
+  await sender.addNotifier(telegramNotifier);
 
   // add Slack notifier if configured
   if (config.slackWebhookUrl) {
@@ -21,6 +22,22 @@ async function run() {
       }),
     );
     console.log("Added notifier");
+  }
+
+  // Send startup message to Telegram
+  logger.info(
+    {
+      addressCount: config.safeAddresses.length,
+      addresses: config.safeAddresses,
+    },
+    "Preparing to send startup notification",
+  );
+
+  try {
+    await telegramNotifier.sendStartupMessage(config.safeAddresses);
+    logger.info("Startup notification sent successfully");
+  } catch (error) {
+    logger.error({ error }, "Failed to send startup notification");
   }
 
   const safes = config.safeAddresses.map(async (safe, i) => {

@@ -69,26 +69,6 @@ class SafeWatcher {
     const pendingTxs = txs
       .filter(tx => tx.isExecuted === false)
       .sort((a, b) => a.nonce - b.nonce);
-    // const hasNewOrExecuted = txs.some(
-    //   tx =>
-    //     !this.#txs.has(tx.safeTxHash) ||
-    //     (tx.isExecuted && !this.#txs.get(tx.safeTxHash)?.isExecuted),
-    // );
-
-    // If there are new pending txs, request report for them together
-    // if (hasNewOrExecuted && pendingTxs.length > 0) {
-    //   this.#logger.debug(
-    //     `safe has ${pendingTxs.length} pending txs, some of them new, generating compound report`,
-    //   );
-    //   await this.anvilManagerAPI.requestSafeReport(
-    //     this.#chain.network,
-    //     pendingTxs,
-    //   );
-    // }
-    // const pendingReport = this.anvilManagerAPI.reportURL(
-    //   this.#chain.network,
-    //   pendingTxs,
-    // );
 
     for (const tx of txs) {
       try {
@@ -113,10 +93,6 @@ class SafeWatcher {
       "detected new tx",
     );
     this.#txs.set(tx.safeTxHash, tx);
-
-    // await this.anvilManagerAPI.requestSafeReport(this.#chain.network, [
-    //   tx.safeTxHash,
-    // ]);
     const detailed = await this.#fetchDetailed(tx.safeTxHash);
 
     const isMalicious =
