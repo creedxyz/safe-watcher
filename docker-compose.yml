@@ -2,18 +2,20 @@ version: '3.8'
 
 services:
   app:
+    image: ${IMAGE_TAG:-ghcr.io/creedxyz/safe-watcher:latest}
     build:
       context: .
       dockerfile: Dockerfile
-      # If you want to pass build-args (e.g., PACKAGE_VERSION) at build time:
-      # args:
-      #   PACKAGE_VERSION: "1.0.0"
     container_name: Creed-SafeWatcher
-     # Mount local config.yaml into /app/config.yaml in the container
-    volumes:
-      - "./config.yaml:/app/config.yaml"
-    # Expose a port, if your app listens on port 3000 inside dist
-    # ports:
-    #   - "3000:3000"
-    # Optional: ensure it restarts if the container fails
     restart: unless-stopped
+    env_file:
+      - stack.env
+    environment:
+      - NODE_ENV=production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHANNEL_ID=${TELEGRAM_CHANNEL_ID}
+      - SAFE_ADDRESSES=${SAFE_ADDRESSES}
+      - SIGNERS=${SIGNERS}
+      - SAFE_URL=${SAFE_URL:-https://app.safe.global}
+      - POLL_INTERVAL=${POLL_INTERVAL:-20}
+      - API=${API:-fallback}
