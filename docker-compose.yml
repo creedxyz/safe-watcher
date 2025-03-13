@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # If you want to pass build-args (e.g., PACKAGE_VERSION) at build time:
+      # args:
+      #   PACKAGE_VERSION: "1.0.0"
+    container_name: Creed-SafeWatcher
+     # Mount local config.yaml into /app/config.yaml in the container
+    volumes:
+      - "./config.yaml:/app/config.yaml"
+    # Expose a port, if your app listens on port 3000 inside dist
+    # ports:
+    #   - "3000:3000"
+    # Optional: ensure it restarts if the container fails
+    restart: unless-stopped
